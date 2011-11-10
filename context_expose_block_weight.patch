@@ -1,0 +1,70 @@
+# This patch can be applied using context Tools: Patch action on respective folder.
+# It uses platform neutral UTF-8 encoding and \n newlines.
+# Above lines and this line are ignored by the patching process.
+Index: context_reaction_block.css
+--- context_reaction_block.css Base (BASE)
++++ context_reaction_block.css Locally Modified (Based On LOCAL)
+@@ -165,6 +165,12 @@
+ #context-blockform td.blocks div.form-item,
+ #context-blockform td.blocks input.block-weight { display:none; }
+ 
++#context-blockform td.blocks div.exposed div.form-item,
++#context-blockform td.blocks div.exposed input.block-weight {
++    display: block;
++    clear: left;
++}
++
+ #context-ui-items #context-blockform {
+   font-size:11px;
+   line-height:15px;
+Index: context_reaction_block.inc
+--- context_reaction_block.inc Base (BASE)
++++ context_reaction_block.inc Locally Modified (Based On LOCAL)
+@@ -66,12 +66,16 @@
+       );
+       foreach ($this->get_blocks($region, $context) as $block) {
+         if (!empty($block->context)) {
++          $weight_form = array('#type' => 'weight', '#delta' => $weight_delta, '#default_value' => 0);
++          if(variable_get('context_reaction_block_expose_weights', FALSE)) {
++            $weight_form = array('#type' => 'weight', '#title' => t('Weight'), '#delta' => $weight_delta, '#default_value' => $block->weight, '#prefix' => '<div class="exposed">', '#suffix' => '</div>');
++          }
+           $form['blocks'][$region][$block->bid] = array(
+             '#value' => check_plain($block->info),
+             '#weight' => $block->weight,
+             '#type' => 'markup',
+             '#tree' => TRUE,
+-            'weight' => array('#type' => 'weight', '#delta' => $weight_delta, '#default_value' => 0),
++            'weight' => $weight_form,
+           );
+         }
+       }
+@@ -97,11 +101,15 @@
+     foreach ($edited as $region => $bids) {
+       foreach ($bids as $position => $bid) {
+         if (isset($block_info[$bid])) {
++          $weight_submitted = $position;
++          if(variable_get('context_reaction_block_expose_weights', FALSE)) {
++            $weight_submitted = $values['blocks'][$region][$block_info[$bid]->module.'-'.$block_info[$bid]->delta][weight];
++          }
+           $blocks[$bid] = array(
+             'module' => $block_info[$bid]->module,
+             'delta' => $block_info[$bid]->delta,
+             'region' => $region,
+-            'weight' => $position,
++            'weight' => $weight_submitted,
+           );
+         }
+       }
+@@ -203,6 +211,12 @@
+       '#default_value' => variable_get('context_reaction_block_all_regions', FALSE),
+       '#description' => t('Show all regions including those that are empty. Enable if you are administering your site using the inline editor.')
+     );
++    $form['context_reaction_block_expose_weights'] = array(
++      '#title' => t('Expose numeric block weights'),
++      '#type' => 'checkbox',
++      '#default_value' => variable_get('context_reaction_block_expose_weights', FALSE),
++      '#description' => t('Expose block weights allowing you to set them manually. This can be useful if you have complex overlapping contexts that place blocks in the same regions. Note that newly added blocks must be saved before their weights are exposed. Also note that any manual settings will be overridden when using the inline editor.')
++    );
+     return $form;
+   }
+ 

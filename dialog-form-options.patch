@@ -1,0 +1,39 @@
+Index: dialog.module
+--- dialog.module
++++ dialog.module
+@@ -132,7 +132,7 @@
+  *   you specifically set re_render = TRUE. If ajax is set the
+  *   form will never be redirected.
+  */
+-function dialog_form_wrapper($form_id, &$form_state) {
++function dialog_form_wrapper($form_id, &$form_state, $options = array()) {
+   ctools_include('form');
+   // This won't override settings already in.
+   $form_state += array(
+@@ -142,7 +142,7 @@
+ 
+   $output = ctools_build_form($form_id, $form_state);
+   if (!empty($form_state['ajax']) && empty($form_state['executed'])) {
+-    return dialog_form_render($form_state, $output);
++    return dialog_form_render($form_state, $output, $options);
+   }
+ 
+   return $output;
+@@ -151,7 +151,7 @@
+ /**
+  * Render a form into an AJAX display.
+  */
+-function dialog_form_render($form_state, $output) {
++function dialog_form_render($form_state, $output, $options = array()) {
+   $title = empty($form_state['title']) ? '' : $form_state['title'];
+ 
+   // If there are messages for the form, render them.
+@@ -164,7 +164,7 @@
+     $commands[] = ctools_ajax_command_settings($form_state['js settings']);
+   }
+ 
+-  $commands[] = dialog_command_display($title, $output);
++  $commands[] = dialog_command_display($title, $output, $options);
+   return $commands;
+ }
+ 
